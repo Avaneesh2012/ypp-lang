@@ -1,0 +1,41 @@
+Import ycompenents
+\\this is a comment\\
+
+
+PRINT: "Something";
+PRINT: "HOLA";
+
+
+\\Integers\\
+NUM 1 {
+smallint = 1si,
+integer applecount = 3i,
+double appleweight = 2.4d,
+ 
+}
+
+
+\\Integers 2\\
+NUM 2 { 
+smallint e = 1si,
+integer applecount = 3i, \\the variables can be the same\\
+double appleweight = 2.4d,
+}
+
+STRING 1 {
+slong fun = "fun";
+schar dumb = "d";
+}
+together = (STRING 1)fun + (STRING 1)dumb;
+PRINT: string() together;
+
+maybetogether = (STRING 1)fun + (NUM 1)applecount; //this is an error//
+PRINT: stringint() maybetogether;
+//this is an error//
+
+EXCEPTION CONCAT :: maybetogether = (STRING 1)fun + (NUM 1)applecount :: PRINT: stringint() maybetogether; //this isn't an error//
+//THIS WILL PRINT OUT "fun 3"//
+
+
+togethers = (NUM 1)applecount * (NUM 2)appleweight;
+PRINT: int() togethers;

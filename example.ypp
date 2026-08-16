@@ -1,0 +1,10 @@
+nvar number = 10;
+svar coolkid = “cool kid!”
+PRINT: coolkid;
+Func hi[nvar e, svar hola] {
+e = 6;
+hola = “hi”
+
+}
+
+func.run(hi)

@@ -1,0 +1,4 @@
+nvar age = 25;
+svar name = "Alice";
+PRINT: name;
+PRINT: age;

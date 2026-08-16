@@ -1,0 +1,63 @@
+Import ycomponents *
+Import apple *
+
+PRINT: "Hello, World!";
+
+func example() \\functions are like classes in java\\ { 
+   NUM 1 { \\u can have the same NUM type and variable\\
+       integer applecount = 4i;
+   }
+   
+   NEW example.(NUM 1) = exampleclass;
+   \\example 2\\
+   NEW example = exampleeverything;
+   \\this runs everything in the example\\
+
+   global NUM 2 {
+       PRINT: "Avaneesh";
+      
+   }
+}
+
+func examples(schar name)  { 
+   NUM 1 { 
+       integer applecount = 2i;
+       schar.name = name; 
+       name.input("What is your name:  ");
+       name.next(); 
+       name.input("What is your age:  ");
+       name.next(); 
+       
+       name.break; 
+   }
+   
+
+   
+
+   global NUM 2 {
+       PRINT: "Avaneesh";
+       
+   }
+
+
+
+exampleclass();
+exampleclasses();
+
+NUM 1 {
+    integer applecount = 3i,
+    double appleweight = 2.4d,
+}
+
+STRING 1 {
+    slong fun = "fun",
+    schar dumb = "d",
+}
+
+together = (STRING 1)fun + " " + (STRING 1)dumb;
+PRINT: string() together;
+
+EXCEPTION CONCAT() {
+    maybetogether = (STRING 1)fun + (NUM 1)applecount;
+    PRINT: stringint() maybetogether;
+}

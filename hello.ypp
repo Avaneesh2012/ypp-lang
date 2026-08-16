@@ -1,0 +1,25 @@
+Import apple *
+
+PRINT: "Hello, World!";
+
+NUM 1 {
+    smallint applecount = 4si,
+    double appleweight = 2.4d,
+}
+
+NUM 2 {
+    integer applecount = 2i;
+}
+
+NUM RocketSpeed {
+    double rocketspeed = (NUM 2)applecount * (NUM 1)applecount;
+}
+
+NUM RocketVel {
+    integer applecountdouble = (NUM RocketSpeed)rocketspeed;
+}
+
+together = (NUM 2)applecount * (NUM 1)appleweight;
+tommorow = (NUM 1)appleweight;
+PRINT: double() (NUM RocketVel)applecountdouble;
+

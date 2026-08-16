@@ -1,0 +1,12 @@
+Import ycomponents *
+
+STRING anything you want {
+    slong text = "Y++ is awesome!",
+}
+
+NUM my favorite number block {
+    integer score = 100i,
+}
+
+PRINT: string() (STRING anything you want)text;
+PRINT: int() (NUM my favorite number block)score;

@@ -1,0 +1,22 @@
+Import ycomponents *
+Import apple *
+
+STRING anything you want {
+    slong fun = "fun",
+    schar dumb = "d",
+}
+
+together = (STRING anything you want)fun + (STRING anything you want)dumb;
+PRINT: string() together;
+
+STRING avaneesh {
+    slong msg = "Hello from avaneesh!",
+}
+
+PRINT: string() (STRING avaneesh)msg;
+
+NUM rocket velocity level {
+    integer speed = 5000i,
+}
+
+PRINT: int() (NUM rocket velocity level)speed;
