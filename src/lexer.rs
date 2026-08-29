@@ -4,89 +4,74 @@ pub struct Lexer {
     source: Vec<char>,
     pos: usize,
     line: usize,
-    prev_token_type: Option<TokenType>,
 }
 
 impl Lexer {
-    pub fn new(source: &str) -> Self {
-        let stripped = Self::strip_comments(source);
+    pub fn new(src: &str) -> Self {
+        let stripped = Self::strip_comments(src);
         Self {
             source: stripped.chars().collect(),
             pos: 0,
             line: 1,
-            prev_token_type: None,
         }
     }
 
     fn strip_comments(src: &str) -> String {
-        let mut out = String::with_capacity(src.len());
+        let mut result = String::new();
         let mut chars = src.chars().peekable();
         let mut in_comment = false;
 
         while let Some(c) = chars.next() {
-            if !in_comment {
-                if c == '\\' && chars.peek() == Some(&'\\') {
-                    chars.next(); // consume second \
-                    in_comment = true;
-                    out.push(' ');
-                    out.push(' ');
+            if in_comment {
+                if c == '\\' {
+                    if let Some(&'\\') = chars.peek() {
+                        chars.next(); // Consume the second '\'
+                        in_comment = false;
+                        result.push(' ');
+                        result.push(' ');
+                    } else if c == '\n' {
+                        result.push('\n');
+                    } else {
+                        result.push(' ');
+                    }
+                } else if c == '\n' {
+                    result.push('\n');
                 } else {
-                    out.push(c);
+                    result.push(' ');
                 }
             } else {
-                if c == '\\' && chars.peek() == Some(&'\\') {
-                    chars.next(); // consume second \
-                    in_comment = false;
-                    out.push(' ');
-                    out.push(' ');
-                } else if c == '\n' {
-                    out.push('\n');
+                if c == '\\' {
+                    if let Some(&'\\') = chars.peek() {
+                        chars.next();
+                        in_comment = true;
+                        result.push(' ');
+                        result.push(' ');
+                    } else {
+                        result.push(c);
+                    }
                 } else {
-                    out.push(' ');
+                    result.push(c);
                 }
             }
         }
-        out
+        result
     }
 
     pub fn tokenize(&mut self) -> Vec<Token> {
         let mut tokens = Vec::new();
-        loop {
+        while !self.is_at_end() {
             self.skip_whitespace();
-            if self.pos >= self.source.len() {
-                tokens.push(Token {
-                    token_type: TokenType::Eof,
-                    line: self.line,
-                });
+            if self.is_at_end() {
                 break;
             }
-            let start_line = self.line;
-            let tok = self.next_token(start_line);
-            self.prev_token_type = Some(tok.token_type.clone());
-            tokens.push(tok);
+            tokens.push(self.next_token());
         }
+        tokens.push(Token::new(TokenType::Eof, "", self.line));
         tokens
     }
 
-    fn skip_whitespace(&mut self) {
-        while let Some(c) = self.peek_char() {
-            if c == ' ' || c == '\t' || c == '\r' {
-                self.advance();
-            } else if c == '\n' {
-                self.line += 1;
-                self.advance();
-            } else {
-                break;
-            }
-        }
-    }
-
-    fn peek_char(&self) -> Option<char> {
-        self.source.get(self.pos).copied()
-    }
-
-    fn peek_char_at(&self, offset: usize) -> Option<char> {
-        self.source.get(self.pos + offset).copied()
+    fn is_at_end(&self) -> bool {
+        self.pos >= self.source.len()
     }
 
     fn advance(&mut self) -> char {
@@ -95,109 +80,90 @@ impl Lexer {
         c
     }
 
-    fn next_token(&mut self, start_line: usize) -> Token {
-        let c = self.peek_char().unwrap();
+    fn peek(&self) -> Option<char> {
+        if self.is_at_end() {
+            None
+        } else {
+            Some(self.source[self.pos])
+        }
+    }
+
+    fn peek_at(&self, offset: usize) -> Option<char> {
+        if self.pos + offset >= self.source.len() {
+            None
+        } else {
+            Some(self.source[self.pos + offset])
+        }
+    }
+
+    fn skip_whitespace(&mut self) {
+        while let Some(c) = self.peek() {
+            if c.is_whitespace() {
+                if c == '\n' {
+                    self.line += 1;
+                }
+                self.advance();
+            } else {
+                break;
+            }
+        }
+    }
+
+    fn next_token(&mut self) -> Token {
+        let c = self.peek().unwrap();
+        let start_line = self.line;
 
         match c {
-            '=' => {
-                self.advance();
-                Token { token_type: TokenType::Equals, line: start_line }
-            }
-            '*' => {
-                self.advance();
-                Token { token_type: TokenType::Star, line: start_line }
-            }
-            '+' => {
-                self.advance();
-                Token { token_type: TokenType::Plus, line: start_line }
-            }
-            '-' => {
-                let next_is_digit = self.peek_char_at(1).map(|ch| ch.is_ascii_digit()).unwrap_or(false);
-                
-                let can_be_minus = match &self.prev_token_type {
-                    Some(TokenType::Ident(_)) |
-                    Some(TokenType::NumberLabel(_)) |
-                    Some(TokenType::LitSmallint(_)) |
-                    Some(TokenType::LitInteger(_)) |
-                    Some(TokenType::LitDouble(_)) |
-                    Some(TokenType::LitString(_)) |
-                    Some(TokenType::RParen) |
-                    Some(TokenType::RBrace) => true,
-                    _ => false,
-                };
-
-                if next_is_digit && !can_be_minus {
-                    self.read_number(start_line)
-                } else {
-                    self.advance();
-                    Token { token_type: TokenType::Minus, line: start_line }
-                }
-            }
-            '/' => {
-                self.advance();
-                Token { token_type: TokenType::Slash, line: start_line }
-            }
+            '=' => { self.advance(); Token::new(TokenType::Equals, "=", start_line) }
+            '*' => { self.advance(); Token::new(TokenType::Star, "*", start_line) }
+            '+' => { self.advance(); Token::new(TokenType::Plus, "+", start_line) }
+            '/' => { self.advance(); Token::new(TokenType::Slash, "/", start_line) }
+            ';' => { self.advance(); Token::new(TokenType::Semicolon, ";", start_line) }
+            ',' => { self.advance(); Token::new(TokenType::Comma, ",", start_line) }
+            '.' => { self.advance(); Token::new(TokenType::Dot, ".", start_line) }
+            '{' => { self.advance(); Token::new(TokenType::LBrace, "{", start_line) }
+            '}' => { self.advance(); Token::new(TokenType::RBrace, "}", start_line) }
+            '(' => { self.advance(); Token::new(TokenType::LParen, "(", start_line) }
+            ')' => { self.advance(); Token::new(TokenType::RParen, ")", start_line) }
+            '!' => { self.advance(); Token::new(TokenType::Bang, "!", start_line) }
             ':' => {
                 self.advance();
-                if self.peek_char() == Some(':') {
+                if let Some(':') = self.peek() {
                     self.advance();
-                    Token { token_type: TokenType::DoubleColon, line: start_line }
+                    Token::new(TokenType::DoubleColon, "::", start_line)
                 } else {
-                    Token { token_type: TokenType::Colon, line: start_line }
+                    Token::new(TokenType::Colon, ":", start_line)
                 }
             }
-            ';' => {
+            '-' => {
                 self.advance();
-                Token { token_type: TokenType::Semicolon, line: start_line }
-            }
-            ',' => {
-                self.advance();
-                Token { token_type: TokenType::Comma, line: start_line }
-            }
-            '.' => {
-                self.advance();
-                Token { token_type: TokenType::Dot, line: start_line }
-            }
-            '{' => {
-                self.advance();
-                Token { token_type: TokenType::LBrace, line: start_line }
-            }
-            '}' => {
-                self.advance();
-                Token { token_type: TokenType::RBrace, line: start_line }
-            }
-            '(' => {
-                self.advance();
-                Token { token_type: TokenType::LParen, line: start_line }
-            }
-            ')' => {
-                self.advance();
-                Token { token_type: TokenType::RParen, line: start_line }
-            }
-            '!' => {
-                self.advance();
-                Token { token_type: TokenType::Bang, line: start_line }
+                // Simple negative number check: if the next char is a digit.
+                // In a real lexer, we'd check the previous token to disambiguate minus vs negative.
+                if let Some(next_c) = self.peek() {
+                    if next_c.is_digit(10) {
+                        self.pos -= 1; // back up
+                        return self.read_number(start_line);
+                    }
+                }
+                Token::new(TokenType::Minus, "-", start_line)
             }
             '"' => self.read_string(start_line),
-            ch if ch.is_ascii_digit() => self.read_number(start_line),
-            ch if ch.is_ascii_alphabetic() || ch == '_' => self.read_ident(start_line),
+            c if c.is_digit(10) => self.read_number(start_line),
+            c if c.is_alphabetic() || c == '_' => self.read_ident(start_line),
             _ => {
                 self.advance();
-                self.skip_whitespace();
-                if self.pos >= self.source.len() {
-                    Token { token_type: TokenType::Eof, line: self.line }
-                } else {
-                    self.next_token(self.line)
-                }
+                // Skip unknown for now
+                self.next_token()
             }
         }
     }
 
     fn read_string(&mut self, start_line: usize) -> Token {
-        self.advance(); // consume opening "
+        self.advance(); // consume "
         let mut val = String::new();
-        while let Some(c) = self.peek_char() {
+        while let Some(c) = self.peek() {
             if c == '"' {
+                self.advance();
                 break;
             }
             if c == '\n' {
@@ -205,81 +171,72 @@ impl Lexer {
             }
             val.push(self.advance());
         }
-        if self.peek_char() == Some('"') {
-            self.advance(); // consume closing "
-        }
-        Token { token_type: TokenType::LitString(val), line: start_line }
+        Token::new(TokenType::LitString, val, start_line)
     }
 
     fn read_number(&mut self, start_line: usize) -> Token {
         let mut val = String::new();
-        if self.peek_char() == Some('-') {
+        if let Some('-') = self.peek() {
             val.push(self.advance());
         }
-        
-        while let Some(c) = self.peek_char() {
-            if c.is_ascii_digit() {
+        while let Some(c) = self.peek() {
+            if c.is_digit(10) || c == '.' {
                 val.push(self.advance());
             } else {
                 break;
             }
         }
-        
-        if self.peek_char() == Some('.') {
-            val.push(self.advance());
-            while let Some(c) = self.peek_char() {
-                if c.is_ascii_digit() {
-                    val.push(self.advance());
-                } else {
-                    break;
+
+        let mut suffix = String::new();
+        if let Some(c) = self.peek() {
+            if c.is_alphabetic() {
+                suffix.push(self.advance());
+                if suffix == "s" {
+                    if let Some('i') = self.peek() {
+                        suffix.push(self.advance());
+                    }
                 }
             }
         }
-        
-        let mut suffix = String::new();
-        while let Some(c) = self.peek_char() {
-            if c.is_ascii_alphabetic() {
-                suffix.push(self.advance());
-            } else {
-                break;
-            }
-        }
 
-        let token_type = match suffix.as_str() {
-            "si" => TokenType::LitSmallint(val),
-            "i" => TokenType::LitInteger(val),
-            "d" => TokenType::LitDouble(val),
-            _ => TokenType::NumberLabel(val),
+        let tt = match suffix.as_str() {
+            "si" => TokenType::LitSmallint,
+            "i" => TokenType::LitInteger,
+            "d" => TokenType::LitDouble,
+            _ => TokenType::NumberLabel,
         };
 
-        Token { token_type, line: start_line }
+        Token::new(tt, val, start_line)
     }
 
     fn read_ident(&mut self, start_line: usize) -> Token {
         let mut val = String::new();
-        while let Some(c) = self.peek_char() {
-            if c.is_ascii_alphanumeric() || c == '_' {
+        while let Some(c) = self.peek() {
+            if c.is_alphanumeric() || c == '_' || c == '-' {
                 val.push(self.advance());
             } else {
                 break;
             }
         }
 
-        let is_cast = val == "int" || val == "double" || val == "string" || val == "stringint";
-        if is_cast && self.peek_char() == Some('(') && self.peek_char_at(1) == Some(')') {
-            self.advance(); // consume (
-            self.advance(); // consume )
-            let token_type = match val.as_str() {
+        // Check for cast calls like int()
+        if self.peek() == Some('(') && self.peek_at(1) == Some(')') {
+            let mut matched = true;
+            let tt = match val.as_str() {
                 "int" => TokenType::CastInt,
                 "double" => TokenType::CastDouble,
                 "string" => TokenType::CastString,
                 "stringint" => TokenType::CastStringint,
-                _ => unreachable!(),
+                _ => { matched = false; TokenType::Ident }
             };
-            return Token { token_type, line: start_line };
+            if matched {
+                self.advance(); // (
+                self.advance(); // )
+                return Token::new(tt, val, start_line);
+            }
         }
 
-        let token_type = match val.as_str() {
+        let tt = match val.as_str() {
             "Import" => TokenType::Import,
             "PRINT" => TokenType::Print,
             "NUM" => TokenType::Num,
@@ -298,9 +255,9 @@ impl Lexer {
             "double" => TokenType::KwDouble,
             "slong" => TokenType::KwSlong,
             "schar" => TokenType::KwSchar,
-            _ => TokenType::Ident(val),
+            _ => TokenType::Ident,
         };
 
-        Token { token_type, line: start_line }
+        Token::new(tt, val, start_line)
     }
 }
