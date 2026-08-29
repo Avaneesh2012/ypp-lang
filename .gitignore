@@ -1,6 +1,6 @@
-# Compiled Java outputs
-out/
-*.class
+# Rust target directory
+target/
+Cargo.lock
 
 # OS / Editor temporary files
 .DS_Store
