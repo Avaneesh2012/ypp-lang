@@ -26,7 +26,7 @@ fn main() {
         run_inline(&args[2]);
     } else if args.len() == 2 {
         if args[1] == "--version" || args[1] == "-v" {
-            println!("Y++ 1.2.0 (Native Release with yGUI)");
+            println!("Y++ 1.2.0 (Native Release)");
         } else if args[1] == "--help" || args[1] == "-h" {
             print_help();
         } else {
@@ -70,7 +70,7 @@ fn run_inline(code: &str) {
 }
 
 fn run_repl() {
-    println!("Y++ 1.2.0 (Rust Interactive Shell with yGUI)");
+    println!("Y++ 1.2.0 (Rust Interactive Shell)");
     println!("Type 'help', 'clear', or 'exit' for options.");
     
     let mut interpreter = Interpreter::new(Box::new(StdinInputProvider));

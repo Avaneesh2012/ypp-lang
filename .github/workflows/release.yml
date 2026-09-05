@@ -100,7 +100,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.2.0
-          name: "Y++ v1.2.0 (with yGUI Support)"
+          name: "Y++ v1.2.0"
           files: artifacts/*
           generate_release_notes: true
         env:
