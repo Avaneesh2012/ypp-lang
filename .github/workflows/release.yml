@@ -84,6 +84,18 @@ jobs:
           path: artifacts
           merge-multiple: true
 
+      - name: Clean up old releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASES=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/Avaneesh2012/ypp-lang/releases")
+          echo "$RELEASES" | jq -r '.[] | select(.tag_name != "v1.2.0") | .id' | while read -r rel_id; do
+            if [ -n "$rel_id" ]; then
+              echo "Deleting old release ID: $rel_id"
+              curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/Avaneesh2012/ypp-lang/releases/$rel_id"
+            fi
+          done
+
       - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
