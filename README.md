@@ -1,4 +1,4 @@
-# Y++ Programming Language [v1.5.0]
+# Y++ Programming Language [v1.2.0 Stable]
 
 Y++ is an interpreted, block-scoped programming language designed for clean syntax, explicit type bounds, built-in TCP socket networking, GUI/game windows, and interactive terminal applications.
 
