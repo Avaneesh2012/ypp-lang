@@ -105,3 +105,15 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set Release Title
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REL_ID=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/Avaneesh2012/ypp-lang/releases/tags/v1.2.0" | jq -r '.id')
+          if [ -n "$REL_ID" ] && [ "$REL_ID" != "null" ]; then
+            curl -s -X PATCH -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/Avaneesh2012/ypp-lang/releases/$REL_ID" \
+              -d '{"name":"Y++ v1.2.0"}'
+          fi
