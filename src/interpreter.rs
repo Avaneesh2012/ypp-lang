@@ -78,17 +78,8 @@ impl Interpreter {
 
     pub fn execute_program(&mut self, program: &AstNode) -> YppResult<()> {
         if let AstNode::Program { statements } = program {
-            // Must have `Import ycomponents`
-            let has_ycomponents = statements.iter().any(|s| {
-                if let AstNode::Import { pkg, .. } = s {
-                    pkg == "ycomponents"
-                } else {
-                    false
-                }
-            });
-
-            if !has_ycomponents {
-                // If there are any non-import statements, error
+            let has_import = statements.iter().any(|s| matches!(s, AstNode::Import { .. }));
+            if !has_import {
                 let has_code = statements.iter().any(|s| !matches!(s, AstNode::Import { .. }));
                 if has_code {
                     return Err(YppError::missing_ycomponents());

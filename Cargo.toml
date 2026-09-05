@@ -5,10 +5,8 @@ edition = "2021"
 description = "Y++ Programming Language Interpreter"
 authors = ["Avaneesh"]
 
-[dependencies]
-rustyline = "15"
-
 [profile.release]
 opt-level = 3
 lto = true
 strip = true
+panic = "abort"

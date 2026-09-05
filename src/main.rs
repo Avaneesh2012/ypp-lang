@@ -9,8 +9,8 @@ mod interpreter;
 
 use std::env;
 use std::fs;
+use std::io::{self, Write};
 use std::process;
-use rustyline::DefaultEditor;
 use crate::lexer::Lexer;
 use crate::parser::Parser;
 use crate::interpreter::{Interpreter, StdinInputProvider};
@@ -23,14 +23,27 @@ fn main() {
     } else if args.len() == 3 && args[1] == "-e" {
         run_inline(&args[2]);
     } else if args.len() == 2 {
-        run_file(&args[1]);
+        if args[1] == "--version" || args[1] == "-v" {
+            println!("Y++ 1.0.0 (Native Release)");
+        } else if args[1] == "--help" || args[1] == "-h" {
+            print_help();
+        } else {
+            run_file(&args[1]);
+        }
     } else {
-        println!("Usage:");
-        println!("  ypp               (Starts interactive REPL)");
-        println!("  ypp <file.ypp>    (Executes a Y++ file)");
-        println!("  ypp -e \"<code>\"   (Executes inline code)");
+        print_help();
         process::exit(1);
     }
+}
+
+fn print_help() {
+    println!("Y++ Programming Language Interpreter v1.0.0");
+    println!("Usage:");
+    println!("  ypp               (Starts interactive REPL)");
+    println!("  ypp <file.ypp>    (Executes a Y++ source file)");
+    println!("  ypp -e \"<code>\"   (Executes inline Y++ code)");
+    println!("  ypp -v, --version (Prints version)");
+    println!("  ypp -h, --help    (Prints this help message)");
 }
 
 fn run_file(path: &str) {
@@ -41,24 +54,23 @@ fn run_file(path: &str) {
             process::exit(1);
         }
     };
-    if let Err(e) = execute(&source, true) {
+    if let Err(e) = execute(&source) {
         eprintln!("[Y++ Error] {}", e);
         process::exit(1);
     }
 }
 
 fn run_inline(code: &str) {
-    if let Err(e) = execute(code, true) {
+    if let Err(e) = execute(code) {
         eprintln!("[Y++ Error] {}", e);
         process::exit(1);
     }
 }
 
 fn run_repl() {
-    println!("Y++ 1.0.0 (Rust Interactive Shell)");
-    println!("Type 'help', 'clear', or 'exit' for more information.");
+    println!("Y++ 1.0.0 (Interactive Shell)");
+    println!("Type 'help', 'clear', or 'exit' for options.");
     
-    let mut rl = DefaultEditor::new().unwrap();
     let mut interpreter = Interpreter::new(Box::new(StdinInputProvider));
     
     // Auto-inject Import ycomponents * for REPL convenience
@@ -75,9 +87,13 @@ fn run_repl() {
 
     loop {
         let prompt = if depth == 0 { "ypp> " } else { "...  " };
-        let readline = rl.readline(prompt);
-        match readline {
-            Ok(line) => {
+        print!("{}", prompt);
+        let _ = io::stdout().flush();
+
+        let mut line = String::new();
+        match io::stdin().read_line(&mut line) {
+            Ok(0) => break, // EOF (Ctrl+D / Ctrl+Z)
+            Ok(_) => {
                 let trimmed = line.trim();
                 if depth == 0 {
                     if trimmed == "exit" || trimmed == "quit" {
@@ -90,18 +106,15 @@ fn run_repl() {
                             let _ = interpreter.execute_program(&ast);
                         }
                         println!("Environment cleared.");
+                        buffer.clear();
                         continue;
                     }
                     if trimmed == "help" {
                         println!("Y++ REPL Help:");
-                        println!("- Type statements and press Enter to execute.");
-                        println!("- Use 'exit' to quit, 'clear' to reset environment.");
+                        println!("- Type Y++ statements and press Enter to execute.");
+                        println!("- Use 'clear' to reset environment, 'exit' to quit.");
                         continue;
                     }
-                }
-
-                if !trimmed.is_empty() {
-                    let _ = rl.add_history_entry(trimmed);
                 }
 
                 for c in line.chars() {
@@ -110,7 +123,6 @@ fn run_repl() {
                 }
 
                 buffer.push_str(&line);
-                buffer.push('\n');
 
                 if depth == 0 && !buffer.trim().is_empty() {
                     let mut lexer = Lexer::new(&buffer);
@@ -136,15 +148,12 @@ fn run_repl() {
     }
 }
 
-fn execute(source: &str, require_import: bool) -> Result<(), crate::error::YppError> {
+fn execute(source: &str) -> Result<(), crate::error::YppError> {
     let mut lexer = Lexer::new(source);
     let tokens = lexer.tokenize();
     let mut parser = Parser::new(tokens);
     let ast = parser.parse()?;
     
     let mut interpreter = Interpreter::new(Box::new(StdinInputProvider));
-    if !require_import {
-        // Just in case we need a mode without it
-    }
     interpreter.execute_program(&ast)
 }

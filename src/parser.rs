@@ -172,7 +172,12 @@ impl Parser {
     fn parse_num_block(&mut self) -> Result<AstNode, YppError> {
         self.advance(); // consume NUM
         let line = self.peek().line;
-        let label = self.expect(TokenType::NumberLabel, "block label")?.value;
+        let label = if self.check(&TokenType::NumberLabel) || self.check(&TokenType::Ident) {
+            self.advance().value
+        } else {
+            let p = self.peek();
+            return Err(YppError::expected_token(p.line, "block label", &format!("{:?}", p.token_type), &p.value));
+        };
         self.expect(TokenType::LBrace, "'{'")?;
         let mut statements = Vec::new();
         while !self.check(&TokenType::RBrace) && !self.is_at_end() {
@@ -215,12 +220,24 @@ impl Parser {
         if self.match_token(TokenType::LParen) {
             self.expect(TokenType::RParen, "')'")?;
         }
-        self.expect(TokenType::LBrace, "'{'")?;
+        
         let mut statements = Vec::new();
-        while !self.check(&TokenType::RBrace) && !self.is_at_end() {
+        if self.match_token(TokenType::DoubleColon) {
+            while !self.is_at_end() && !self.check(&TokenType::Semicolon) {
+                statements.push(self.parse_statement()?);
+                if !self.match_token(TokenType::DoubleColon) {
+                    break;
+                }
+            }
+            self.optional_semicolon();
+        } else if self.match_token(TokenType::LBrace) {
+            while !self.check(&TokenType::RBrace) && !self.is_at_end() {
+                statements.push(self.parse_statement()?);
+            }
+            self.expect(TokenType::RBrace, "'}'")?;
+        } else {
             statements.push(self.parse_statement()?);
         }
-        self.expect(TokenType::RBrace, "'}'")?;
         Ok(AstNode::ExceptionConcat { statements })
     }
 

@@ -19,39 +19,45 @@ impl Lexer {
     fn strip_comments(src: &str) -> String {
         let mut result = String::new();
         let mut chars = src.chars().peekable();
-        let mut in_comment = false;
 
         while let Some(c) = chars.next() {
-            if in_comment {
-                if c == '\\' {
-                    if let Some(&'\\') = chars.peek() {
-                        chars.next(); // Consume the second '\'
-                        in_comment = false;
+            if c == '\\' && chars.peek() == Some(&'\\') {
+                chars.next(); // consume second '\'
+                result.push(' ');
+                result.push(' ');
+                // read until closing '\\' or EOF
+                while let Some(ch) = chars.next() {
+                    if ch == '\\' && chars.peek() == Some(&'\\') {
+                        chars.next();
                         result.push(' ');
                         result.push(' ');
-                    } else if c == '\n' {
+                        break;
+                    } else if ch == '\n' {
                         result.push('\n');
                     } else {
                         result.push(' ');
                     }
-                } else if c == '\n' {
-                    result.push('\n');
-                } else {
-                    result.push(' ');
+                }
+            } else if c == '/' && chars.peek() == Some(&'/') {
+                chars.next(); // consume second '/'
+                result.push(' ');
+                result.push(' ');
+                // read until closing '//' or '\n' or EOF
+                while let Some(ch) = chars.next() {
+                    if ch == '/' && chars.peek() == Some(&'/') {
+                        chars.next();
+                        result.push(' ');
+                        result.push(' ');
+                        break;
+                    } else if ch == '\n' {
+                        result.push('\n');
+                        break;
+                    } else {
+                        result.push(' ');
+                    }
                 }
             } else {
-                if c == '\\' {
-                    if let Some(&'\\') = chars.peek() {
-                        chars.next();
-                        in_comment = true;
-                        result.push(' ');
-                        result.push(' ');
-                    } else {
-                        result.push(c);
-                    }
-                } else {
-                    result.push(c);
-                }
+                result.push(c);
             }
         }
         result
