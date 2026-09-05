@@ -1,0 +1,31 @@
+Import ycomponents *
+Import ynetworking *
+
+func runserver() {
+    global NUM 1 {
+        integer port = 6000i;
+    }
+}
+
+NEW runserver = setup;
+setup();
+
+lobby = new Server(6000);
+PRINT: "Y++ chat server listening on port 6000...";
+
+link = lobby.accept();
+PRINT: "A client connected.";
+
+incoming = new primitivedataStream(link.inputstream());
+outgoing = new primitivedataStream(link.outstream());
+
+outgoing.utf-8("Welcome to the Y++ server!");
+
+STRING msg;
+while (NOT: msg = incoming.readutf-8().equals("bye")) {
+    PRINT: "Client said: " + msg;
+    outgoing.utf-8("Server got your message.");
+}
+
+PRINT: "Client said goodbye. Closing.";
+link.close();

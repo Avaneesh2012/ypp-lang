@@ -1,0 +1,62 @@
+Import ycomponents *
+Import yGUI *
+
+NUM framedimensions {
+integer framewidth = 60;
+integer framelength = 70;
+}
+
+NEW yGUI.(NUM framedimensions) = setup;
+frame = setup();
+
+frame.dimensions(60, 70);
+
+frame.color = BLACK; \\you can chose alot of color\\
+
+func entity(width, length) {
+    NUM entitydimensions {
+    integer width = width;
+    integer length = length;
+    }
+}
+NEW entity.(NUM entitydimensions) = setup;
+setup();
+
+playerwidth = entity.width;
+playerlength = entity.length;
+
+player = dimensions(playerlength, playerwidth); \\this is another way to get dimensions\\
+
+func entityMovement(x, y) {
+    NUM playerMovement {
+    integer x = x;
+    integer y = y;
+    }
+    STRING controls {
+        schar w,a,s,d = ['w','a','s','d'];
+    }
+    controls = entityMovement.(STRING controls);
+    playerMovement = playerMovement(NUM playerMovement);
+
+    if controls.w == KEYBOARD.KEYHOLD('w') {
+        y++;
+    }
+    if controls.a == KEYBOARD.KEYHOLD('a') {
+        x--;
+    }
+    if controls.s == KEYBOARD.KEYHOLD('s') {
+        y--;
+    }
+    if controls.d == KEYBOARD.KEYHOLD('d') {
+        x++;
+    }
+}
+NEW entityMovement = setup;
+setup();
+
+bool trueforever = TRUE;
+while trueforever {
+    yGUI();
+    entity();
+    entityMovement();
+}

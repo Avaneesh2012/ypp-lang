@@ -1,4 +1,4 @@
-Import apple *
+Import ycomponents *
 
 PRINT: "Hello, World!";
 

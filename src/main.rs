@@ -4,7 +4,9 @@ mod ast;
 mod parser;
 mod value;
 mod error;
+mod packages;
 mod networking;
+mod gui;
 mod interpreter;
 
 use std::env;
@@ -24,7 +26,7 @@ fn main() {
         run_inline(&args[2]);
     } else if args.len() == 2 {
         if args[1] == "--version" || args[1] == "-v" {
-            println!("Y++ 1.0.0 (Native Release)");
+            println!("Y++ 1.5.0 (Native Release with yGUI)");
         } else if args[1] == "--help" || args[1] == "-h" {
             print_help();
         } else {
@@ -37,7 +39,7 @@ fn main() {
 }
 
 fn print_help() {
-    println!("Y++ Programming Language Interpreter v1.0.0");
+    println!("Y++ Programming Language Interpreter v1.5.0");
     println!("Usage:");
     println!("  ypp               (Starts interactive REPL)");
     println!("  ypp <file.ypp>    (Executes a Y++ source file)");
@@ -54,21 +56,21 @@ fn run_file(path: &str) {
             process::exit(1);
         }
     };
-    if let Err(e) = execute(&source) {
+    if let Err(e) = execute(&source, true) {
         eprintln!("[Y++ Error] {}", e);
         process::exit(1);
     }
 }
 
 fn run_inline(code: &str) {
-    if let Err(e) = execute(code) {
+    if let Err(e) = execute(code, true) {
         eprintln!("[Y++ Error] {}", e);
         process::exit(1);
     }
 }
 
 fn run_repl() {
-    println!("Y++ 1.0.0 (Interactive Shell)");
+    println!("Y++ 1.5.0 (Rust Interactive Shell with yGUI)");
     println!("Type 'help', 'clear', or 'exit' for options.");
     
     let mut interpreter = Interpreter::new(Box::new(StdinInputProvider));
@@ -92,7 +94,7 @@ fn run_repl() {
 
         let mut line = String::new();
         match io::stdin().read_line(&mut line) {
-            Ok(0) => break, // EOF (Ctrl+D / Ctrl+Z)
+            Ok(0) => break, // EOF
             Ok(_) => {
                 let trimmed = line.trim();
                 if depth == 0 {
@@ -148,12 +150,21 @@ fn run_repl() {
     }
 }
 
-fn execute(source: &str) -> Result<(), crate::error::YppError> {
+fn execute(source: &str, require_import: bool) -> Result<(), crate::error::YppError> {
     let mut lexer = Lexer::new(source);
     let tokens = lexer.tokenize();
     let mut parser = Parser::new(tokens);
     let ast = parser.parse()?;
     
     let mut interpreter = Interpreter::new(Box::new(StdinInputProvider));
+    if !require_import {
+        let import_stmt = "Import ycomponents *;";
+        let mut l = Lexer::new(import_stmt);
+        let t = l.tokenize();
+        let mut p = Parser::new(t);
+        if let Ok(a) = p.parse() {
+            let _ = interpreter.execute_program(&a);
+        }
+    }
     interpreter.execute_program(&ast)
 }

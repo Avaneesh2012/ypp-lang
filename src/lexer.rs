@@ -19,42 +19,34 @@ impl Lexer {
     fn strip_comments(src: &str) -> String {
         let mut result = String::new();
         let mut chars = src.chars().peekable();
+        let mut in_comment = false;
 
         while let Some(c) = chars.next() {
-            if c == '\\' && chars.peek() == Some(&'\\') {
-                chars.next(); // consume second '\'
-                result.push(' ');
-                result.push(' ');
-                // read until closing '\\' or EOF
-                while let Some(ch) = chars.next() {
-                    if ch == '\\' && chars.peek() == Some(&'\\') {
+            if in_comment {
+                if c == '\\' {
+                    if let Some(&'\\') = chars.peek() {
                         chars.next();
+                        in_comment = false;
                         result.push(' ');
                         result.push(' ');
-                        break;
-                    } else if ch == '\n' {
+                    } else if c == '\n' {
                         result.push('\n');
                     } else {
                         result.push(' ');
                     }
+                } else if c == '\n' {
+                    result.push('\n');
+                } else {
+                    result.push(' ');
                 }
-            } else if c == '/' && chars.peek() == Some(&'/') {
-                chars.next(); // consume second '/'
-                result.push(' ');
-                result.push(' ');
-                // read until closing '//' or '\n' or EOF
-                while let Some(ch) = chars.next() {
-                    if ch == '/' && chars.peek() == Some(&'/') {
-                        chars.next();
-                        result.push(' ');
-                        result.push(' ');
-                        break;
-                    } else if ch == '\n' {
-                        result.push('\n');
-                        break;
-                    } else {
-                        result.push(' ');
-                    }
+            } else if c == '\\' {
+                if let Some(&'\\') = chars.peek() {
+                    chars.next();
+                    in_comment = true;
+                    result.push(' ');
+                    result.push(' ');
+                } else {
+                    result.push(c);
                 }
             } else {
                 result.push(c);
@@ -116,22 +108,102 @@ impl Lexer {
     }
 
     fn next_token(&mut self) -> Token {
-        let c = self.peek().unwrap();
+        let c = match self.peek() {
+            Some(c) => c,
+            None => return Token::new(TokenType::Eof, "", self.line),
+        };
         let start_line = self.line;
 
         match c {
-            '=' => { self.advance(); Token::new(TokenType::Equals, "=", start_line) }
-            '*' => { self.advance(); Token::new(TokenType::Star, "*", start_line) }
-            '+' => { self.advance(); Token::new(TokenType::Plus, "+", start_line) }
-            '/' => { self.advance(); Token::new(TokenType::Slash, "/", start_line) }
-            ';' => { self.advance(); Token::new(TokenType::Semicolon, ";", start_line) }
-            ',' => { self.advance(); Token::new(TokenType::Comma, ",", start_line) }
-            '.' => { self.advance(); Token::new(TokenType::Dot, ".", start_line) }
-            '{' => { self.advance(); Token::new(TokenType::LBrace, "{", start_line) }
-            '}' => { self.advance(); Token::new(TokenType::RBrace, "}", start_line) }
-            '(' => { self.advance(); Token::new(TokenType::LParen, "(", start_line) }
-            ')' => { self.advance(); Token::new(TokenType::RParen, ")", start_line) }
-            '!' => { self.advance(); Token::new(TokenType::Bang, "!", start_line) }
+            '=' => {
+                self.advance();
+                if self.peek() == Some('=') {
+                    self.advance();
+                    Token::new(TokenType::EqEq, "==", start_line)
+                } else {
+                    Token::new(TokenType::Equals, "=", start_line)
+                }
+            }
+            '!' => {
+                self.advance();
+                if self.peek() == Some('=') {
+                    self.advance();
+                    Token::new(TokenType::NotEq, "!=", start_line)
+                } else {
+                    Token::new(TokenType::Bang, "!", start_line)
+                }
+            }
+            '<' => {
+                self.advance();
+                if self.peek() == Some('=') {
+                    self.advance();
+                    Token::new(TokenType::LtEq, "<=", start_line)
+                } else {
+                    Token::new(TokenType::Lt, "<", start_line)
+                }
+            }
+            '>' => {
+                self.advance();
+                if self.peek() == Some('=') {
+                    self.advance();
+                    Token::new(TokenType::GtEq, ">=", start_line)
+                } else {
+                    Token::new(TokenType::Gt, ">", start_line)
+                }
+            }
+            '*' => {
+                self.advance();
+                Token::new(TokenType::Star, "*", start_line)
+            }
+            '+' => {
+                self.advance();
+                if self.peek() == Some('+') {
+                    self.advance();
+                    Token::new(TokenType::PlusPlus, "++", start_line)
+                } else {
+                    Token::new(TokenType::Plus, "+", start_line)
+                }
+            }
+            '/' => {
+                self.advance();
+                Token::new(TokenType::Slash, "/", start_line)
+            }
+            ';' => {
+                self.advance();
+                Token::new(TokenType::Semicolon, ";", start_line)
+            }
+            ',' => {
+                self.advance();
+                Token::new(TokenType::Comma, ",", start_line)
+            }
+            '.' => {
+                self.advance();
+                Token::new(TokenType::Dot, ".", start_line)
+            }
+            '{' => {
+                self.advance();
+                Token::new(TokenType::LBrace, "{", start_line)
+            }
+            '}' => {
+                self.advance();
+                Token::new(TokenType::RBrace, "}", start_line)
+            }
+            '(' => {
+                self.advance();
+                Token::new(TokenType::LParen, "(", start_line)
+            }
+            ')' => {
+                self.advance();
+                Token::new(TokenType::RParen, ")", start_line)
+            }
+            '[' => {
+                self.advance();
+                Token::new(TokenType::LBracket, "[", start_line)
+            }
+            ']' => {
+                self.advance();
+                Token::new(TokenType::RBracket, "]", start_line)
+            }
             ':' => {
                 self.advance();
                 if let Some(':') = self.peek() {
@@ -143,25 +215,65 @@ impl Lexer {
             }
             '-' => {
                 self.advance();
-                // Simple negative number check: if the next char is a digit.
-                // In a real lexer, we'd check the previous token to disambiguate minus vs negative.
-                if let Some(next_c) = self.peek() {
-                    if next_c.is_digit(10) {
-                        self.pos -= 1; // back up
-                        return self.read_number(start_line);
+                if self.peek() == Some('-') {
+                    self.advance();
+                    Token::new(TokenType::MinusMinus, "--", start_line)
+                } else if let Some(next_c) = self.peek() {
+                    if next_c.is_ascii_digit() {
+                        self.pos -= 1;
+                        self.read_number(start_line)
+                    } else {
+                        Token::new(TokenType::Minus, "-", start_line)
                     }
+                } else {
+                    Token::new(TokenType::Minus, "-", start_line)
                 }
-                Token::new(TokenType::Minus, "-", start_line)
             }
             '"' => self.read_string(start_line),
-            c if c.is_digit(10) => self.read_number(start_line),
+            '\'' => self.read_char(start_line),
+            c if c.is_ascii_digit() => self.read_number(start_line),
             c if c.is_alphabetic() || c == '_' => self.read_ident(start_line),
             _ => {
                 self.advance();
-                // Skip unknown for now
-                self.next_token()
+                if self.is_at_end() {
+                    Token::new(TokenType::Eof, "", start_line)
+                } else {
+                    self.next_token()
+                }
             }
         }
+    }
+
+    fn read_char(&mut self, start_line: usize) -> Token {
+        self.advance(); // consume '
+        let mut val = String::new();
+        while let Some(c) = self.peek() {
+            if c == '\'' {
+                self.advance();
+                break;
+            }
+            if c == '\n' {
+                self.line += 1;
+            }
+            if c == '\\' {
+                self.advance();
+                if let Some(n) = self.peek() {
+                    let escaped = match n {
+                        'n' => '\n',
+                        't' => '\t',
+                        '\\' => '\\',
+                        '\'' => '\'',
+                        '"' => '"',
+                        other => other,
+                    };
+                    self.advance();
+                    val.push(escaped);
+                }
+            } else {
+                val.push(self.advance());
+            }
+        }
+        Token::new(TokenType::LitChar, val, start_line)
     }
 
     fn read_string(&mut self, start_line: usize) -> Token {
@@ -186,7 +298,7 @@ impl Lexer {
             val.push(self.advance());
         }
         while let Some(c) = self.peek() {
-            if c.is_digit(10) || c == '.' {
+            if c.is_ascii_digit() || c == '.' {
                 val.push(self.advance());
             } else {
                 break;
@@ -225,7 +337,6 @@ impl Lexer {
             }
         }
 
-        // Check for cast calls like int()
         if self.peek() == Some('(') && self.peek_at(1) == Some(')') {
             let mut matched = true;
             let tt = match val.as_str() {
@@ -233,11 +344,14 @@ impl Lexer {
                 "double" => TokenType::CastDouble,
                 "string" => TokenType::CastString,
                 "stringint" => TokenType::CastStringint,
-                _ => { matched = false; TokenType::Ident }
+                _ => {
+                    matched = false;
+                    TokenType::Ident
+                }
             };
             if matched {
-                self.advance(); // (
-                self.advance(); // )
+                self.advance();
+                self.advance();
                 return Token::new(tt, val, start_line);
             }
         }
@@ -255,15 +369,34 @@ impl Lexer {
             "NEW" | "new" => TokenType::New,
             "global" => TokenType::KwGlobal,
             "while" => TokenType::While,
+            "if" => TokenType::If,
+            "else" => TokenType::Else,
             "NOT" => TokenType::Not,
+            "TRUE" | "true" => TokenType::True,
+            "FALSE" | "false" => TokenType::False,
             "smallint" => TokenType::KwSmallint,
             "integer" => TokenType::KwInteger,
             "double" => TokenType::KwDouble,
             "slong" => TokenType::KwSlong,
             "schar" => TokenType::KwSchar,
+            "bool" => TokenType::KwBool,
             _ => TokenType::Ident,
         };
 
         Token::new(tt, val, start_line)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn lexes_gui_tokens() {
+        let mut lexer = Lexer::new("if KEYBOARD.KEYHOLD('w') { y++; }");
+        let types: Vec<TokenType> = lexer.tokenize().into_iter().map(|t| t.token_type).collect();
+        assert!(types.contains(&TokenType::If));
+        assert!(types.contains(&TokenType::PlusPlus));
+        assert!(types.contains(&TokenType::LitChar));
     }
 }

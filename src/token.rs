@@ -16,8 +16,12 @@ pub enum TokenType {
     New,
     KwGlobal,
     While,
+    If,
+    Else,
     Not,
     Bang,
+    True,
+    False,
 
     // Type keywords
     KwSmallint,
@@ -25,6 +29,7 @@ pub enum TokenType {
     KwDouble,
     KwSlong,
     KwSchar,
+    KwBool,
 
     // Cast calls
     CastInt,
@@ -37,6 +42,7 @@ pub enum TokenType {
     LitInteger,
     LitDouble,
     LitString,
+    LitChar,
 
     // Identifiers and numbers
     Ident,
@@ -44,9 +50,17 @@ pub enum TokenType {
 
     // Operators
     Equals,
+    EqEq,
+    NotEq,
+    Lt,
+    Gt,
+    LtEq,
+    GtEq,
     Star,
     Plus,
+    PlusPlus,
     Minus,
+    MinusMinus,
     Slash,
 
     // Punctuation
@@ -59,6 +73,8 @@ pub enum TokenType {
     RBrace,
     LParen,
     RParen,
+    LBracket,
+    RBracket,
 
     Eof,
 }

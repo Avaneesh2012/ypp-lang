@@ -21,6 +21,17 @@ impl YppError {
         Self::new(format!("Line {}: Import ynetworking is required to use {}.", line, class_name))
     }
 
+    pub fn missing_ygui(line: usize, feature: &str) -> Self {
+        Self::new(format!("Line {}: Import yGUI is required to use {}.", line, feature))
+    }
+
+    pub fn unknown_package(line: usize, pkg: &str) -> Self {
+        Self::new(format!(
+            "Line {}: unknown package '{}'. Built-in packages are ycomponents, ynetworking, and yGUI.",
+            line, pkg
+        ))
+    }
+
     // --- Type bounds errors ---
 
     pub fn smallint_out_of_range(line: usize, val: f64) -> Self {
@@ -113,6 +124,31 @@ impl YppError {
 
     pub fn stream_error(line: usize, method: &str, msg: &str) -> Self {
         Self::new(format!("Line {}: Stream error in {}: {}", line, method, msg))
+    }
+
+    pub fn invalid_network_host(line: usize, host: &str) -> Self {
+        Self::new(format!("Line {}: invalid network host '{}'", line, host))
+    }
+
+    pub fn invalid_network_port(line: usize, port: u16) -> Self {
+        Self::new(format!("Line {}: invalid network port {} (must be 1–65535)", line, port))
+    }
+
+    pub fn object_limit_reached(line: usize) -> Self {
+        Self::new(format!("Line {}: runtime object limit reached", line))
+    }
+
+    // --- GUI errors ---
+
+    pub fn gui_window_error(line: usize, msg: &str) -> Self {
+        Self::new(format!("Line {}: yGUI window error: {}", line, msg))
+    }
+
+    pub fn gui_size_error(line: usize, w: usize, h: usize) -> Self {
+        Self::new(format!(
+            "Line {}: yGUI frame size {}x{} is too large (max 256x256 cells)",
+            line, w, h
+        ))
     }
 
     // --- Runtime errors ---

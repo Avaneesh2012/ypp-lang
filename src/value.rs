@@ -6,8 +6,9 @@ pub enum Value {
     Number(f64),
     Str(String),
     Bool(bool),
-    /// Opaque object handle (networking objects, streams, readers).
+    /// Opaque object handle (networking objects, streams, readers, GUI).
     Object(ObjectHandle),
+    List(Vec<Value>),
     Nil,
 }
 
@@ -33,6 +34,7 @@ impl Value {
             Value::Number(n) => *n != 0.0,
             Value::Str(s) => !s.is_empty() && !s.eq_ignore_ascii_case("false") && !s.eq_ignore_ascii_case("null"),
             Value::Object(_) => true,
+            Value::List(items) => !items.is_empty(),
         }
     }
 
@@ -58,6 +60,10 @@ impl fmt::Display for Value {
             Value::Str(s) => write!(f, "{}", s),
             Value::Bool(b) => write!(f, "{}", b),
             Value::Object(h) => write!(f, "<object {:?}>", h),
+            Value::List(items) => {
+                let inner: Vec<String> = items.iter().map(|v| format!("{}", v)).collect();
+                write!(f, "[{}]", inner.join(", "))
+            }
             Value::Nil => write!(f, "nil"),
         }
     }
