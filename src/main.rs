@@ -26,7 +26,7 @@ fn main() {
         run_inline(&args[2]);
     } else if args.len() == 2 {
         if args[1] == "--version" || args[1] == "-v" {
-            println!("Y++ 1.2.0 (Native Release)");
+            println!("Y++ 1.2.1 (Native Release)");
         } else if args[1] == "--help" || args[1] == "-h" {
             print_help();
         } else {
@@ -41,7 +41,7 @@ fn main() {
 }
 
 fn print_help() {
-    println!("Y++ Programming Language Interpreter v1.2.0");
+    println!("Y++ Programming Language Interpreter v1.2.1");
     println!("Usage:");
     println!("  ypp               (Starts interactive REPL)");
     println!("  ypp <file.ypp>    (Executes a Y++ source file)");
@@ -72,7 +72,7 @@ fn run_inline(code: &str) {
 }
 
 fn run_repl() {
-    println!("Y++ 1.2.0 (Rust Interactive Shell)");
+    println!("Y++ 1.2.1 (Rust Interactive Shell)");
     println!("Type 'help', 'clear', or 'exit' for options.");
     
     let mut interpreter = Interpreter::new(Box::new(StdinInputProvider));

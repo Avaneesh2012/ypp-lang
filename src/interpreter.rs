@@ -12,6 +12,13 @@ use crate::networking::{
 
 const MAX_RUNTIME_OBJECTS: usize = 1024;
 
+/// Returned by execute_statement to propagate control flow signals up the call stack.
+#[derive(Debug, PartialEq)]
+pub enum ControlFlow {
+    Normal,
+    Continue,
+}
+
 pub trait InputProvider {
     fn read_line(&mut self, prompt: &str) -> String;
 }
@@ -161,7 +168,7 @@ impl Interpreter {
         Ok(())
     }
 
-    pub fn execute_statement(&mut self, stmt: &AstNode) -> YppResult<()> {
+    pub fn execute_statement(&mut self, stmt: &AstNode) -> Result<ControlFlow, YppError> {
         match stmt {
             AstNode::Import { pkg, .. } => {
                 let line = 1;
@@ -347,15 +354,22 @@ impl Interpreter {
                 println!();
             }
             AstNode::ParamBreak { .. } => {}
-            AstNode::Continue { .. } => {}
+            AstNode::Continue { .. } => {
+                return Ok(ControlFlow::Continue);
+            }
             AstNode::While { condition, body, .. } => {
                 while self.evaluate(condition)?.is_truthy() {
                     if self.gui.as_ref().map(|g| g.closed).unwrap_or(false) {
                         break;
                     }
+                    let mut did_continue = false;
                     for s in body {
-                        self.execute_statement(s)?;
+                        if self.execute_statement(s)? == ControlFlow::Continue {
+                            did_continue = true;
+                            break;
+                        }
                     }
+                    let _ = did_continue; // loop just restarts naturally
                 }
             }
             AstNode::For { init, condition, update, body, .. } => {
@@ -371,22 +385,34 @@ impl Interpreter {
                     if self.gui.as_ref().map(|g| g.closed).unwrap_or(false) {
                         break;
                     }
+                    let mut did_continue = false;
                     for s in body {
-                        self.execute_statement(s)?;
+                        if self.execute_statement(s)? == ControlFlow::Continue {
+                            did_continue = true;
+                            break;
+                        }
                     }
+                    // Always run update even if continue fired
                     if let Some(u) = update {
                         self.execute_statement(u)?;
                     }
+                    let _ = did_continue;
                 }
             }
             AstNode::If { condition, body, else_body, .. } => {
                 if self.evaluate(condition)?.is_truthy() {
                     for s in body {
-                        self.execute_statement(s)?;
+                        let cf = self.execute_statement(s)?;
+                        if cf == ControlFlow::Continue {
+                            return Ok(ControlFlow::Continue);
+                        }
                     }
                 } else if let Some(eb) = else_body {
                     for s in eb {
-                        self.execute_statement(s)?;
+                        let cf = self.execute_statement(s)?;
+                        if cf == ControlFlow::Continue {
+                            return Ok(ControlFlow::Continue);
+                        }
                     }
                 }
             }
@@ -407,7 +433,7 @@ impl Interpreter {
             }
             _ => {}
         }
-        Ok(())
+        Ok(ControlFlow::Normal)
     }
 
     fn assign_string_var(&mut self, type_name: &str, var_name: &str, val: Value, line: usize) -> YppResult<()> {

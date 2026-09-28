@@ -296,4 +296,4 @@ EXCEPTION CONCAT() {
 ## License & Author
 
 Created by **Avaneesh** (2026).  
-Version 1.5.0
+Version 1.2.1
