@@ -7,6 +7,8 @@ authors = ["Avaneesh"]
 
 [dependencies]
 minifb = "0.28"
+
+[target.'cfg(windows)'.dependencies]
 native-windows-derive = "1.0.5"
 native-windows-gui = "1.0.13"
 

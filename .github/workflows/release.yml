@@ -58,17 +58,20 @@ jobs:
         run: |
           mkdir -p dist
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            cp "target/${{ matrix.target }}/release/${{ matrix.artifact_name }}" "dist/${{ matrix.asset_name }}"
+            cp "target/${{ matrix.target }}/release/ypp.exe" "dist/ypp-windows-amd64.exe"
+            cp "target/${{ matrix.target }}/release/ypp-ide.exe" "dist/ypp-ide-windows-amd64.exe"
           else
-            cp "target/${{ matrix.target }}/release/${{ matrix.artifact_name }}" "dist/${{ matrix.asset_name }}"
-            chmod +x "dist/${{ matrix.asset_name }}"
+            cp "target/${{ matrix.target }}/release/ypp" "dist/ypp-${{ matrix.os }}-amd64"
+            cp "target/${{ matrix.target }}/release/ypp-ide" "dist/ypp-ide-${{ matrix.os }}-amd64"
+            chmod +x "dist/ypp-${{ matrix.os }}-amd64"
+            chmod +x "dist/ypp-ide-${{ matrix.os }}-amd64"
           fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.asset_name }}
-          path: dist/${{ matrix.asset_name }}
+          name: ${{ matrix.os }}-bins
+          path: dist/*
 
   release:
     name: Create GitHub Release
@@ -89,7 +92,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           RELEASES=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/Avaneesh2012/ypp-lang/releases")
-          echo "$RELEASES" | jq -r '.[] | select(.tag_name != "v1.2.0") | .id' | while read -r rel_id; do
+          echo "$RELEASES" | jq -r '.[] | select(.tag_name != "v1.2.1") | .id' | while read -r rel_id; do
             if [ -n "$rel_id" ]; then
               echo "Deleting old release ID: $rel_id"
               curl -s -X DELETE -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/Avaneesh2012/ypp-lang/releases/$rel_id"
@@ -99,8 +102,8 @@ jobs:
       - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.2.0
-          name: "Y++ v1.2.0"
+          tag_name: v1.2.1
+          name: "Y++ v1.2.1"
           files: artifacts/*
           generate_release_notes: true
         env:
@@ -110,10 +113,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          REL_ID=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/Avaneesh2012/ypp-lang/releases/tags/v1.2.0" | jq -r '.id')
+          REL_ID=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/Avaneesh2012/ypp-lang/releases/tags/v1.2.1" | jq -r '.id')
           if [ -n "$REL_ID" ] && [ "$REL_ID" != "null" ]; then
             curl -s -X PATCH -H "Authorization: token $GITHUB_TOKEN" \
               -H "Accept: application/vnd.github.v3+json" \
               "https://api.github.com/repos/Avaneesh2012/ypp-lang/releases/$REL_ID" \
-              -d '{"name":"Y++ v1.2.0"}'
+              -d '{"name":"Y++ v1.2.1"}'
           fi
