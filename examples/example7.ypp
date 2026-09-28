@@ -1,0 +1,76 @@
+Import ycomponents *
+Import yGUI *
+
+NUM framedimensions {
+integer framewidth = 60;
+integer framelength = 70;
+}
+
+
+NEW yGUI.(NUM framedimensions) = setup;
+frame = setup();
+
+frame.dimensions(60, 70);
+
+frame.color = BLACK; \\you can chose alot of color\\
+
+
+STRING playershape {
+    slong shape = "square";
+}
+
+NEW yGUI.(STRING playershape) = setup;
+shape = setup;
+shape.shape()
+shape.color = WHITE;
+
+player = dimensions(playerlength, playerwidth); \\this is another way to get dimensions\\
+
+func entityMovement(x, y) {
+    NUM playerMovement {
+    integer x = x;
+    integer y = y;
+    }
+    STRING controls {
+        schar w,a,s,d = ['w','a','s','d'];
+    }
+    controls = entityMovement.(STRING controls);
+    playerMovement = playerMovement(NUM playerMovement);
+
+    if controls.w == KEYBOARD.KEYHOLD('w') {
+        y++;
+    }
+    if controls.a == KEYBOARD.KEYHOLD('a') {
+        x--;
+    }
+    if controls.s == KEYBOARD.KEYHOLD('s') {
+        y--;
+    }
+    if controls.d == KEYBOARD.KEYHOLD('d') {
+        x++;
+    }
+}
+exit = 'q';
+if exit == KEYBOARD.KEYHOLD('q') {
+    comp.quit() \\comp = computer, this is a ycomponents program, quit is generaric\\
+}
+else {
+    continue; \\continue is also a generaric keyword, from \\
+}
+
+NUM random {
+    integer i = 5;
+}
+i = (NUM random).i;
+if (i>4) {
+    PRINT: "hello world!";
+}
+NEW entityMovement = setup;
+setup();
+
+bool trueforever = TRUE;
+while trueforever {
+    yGUI();
+    entity();
+    entityMovement();
+}

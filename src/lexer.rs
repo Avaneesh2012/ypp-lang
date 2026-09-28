@@ -369,6 +369,7 @@ impl Lexer {
             "NEW" | "new" => TokenType::New,
             "global" => TokenType::KwGlobal,
             "while" => TokenType::While,
+            "for" => TokenType::For,
             "if" => TokenType::If,
             "else" => TokenType::Else,
             "NOT" => TokenType::Not,
@@ -380,6 +381,7 @@ impl Lexer {
             "slong" => TokenType::KwSlong,
             "schar" => TokenType::KwSchar,
             "bool" => TokenType::KwBool,
+            "continue" => TokenType::Continue,
             _ => TokenType::Ident,
         };
 

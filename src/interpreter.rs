@@ -347,6 +347,7 @@ impl Interpreter {
                 println!();
             }
             AstNode::ParamBreak { .. } => {}
+            AstNode::Continue { .. } => {}
             AstNode::While { condition, body, .. } => {
                 while self.evaluate(condition)?.is_truthy() {
                     if self.gui.as_ref().map(|g| g.closed).unwrap_or(false) {
@@ -354,6 +355,27 @@ impl Interpreter {
                     }
                     for s in body {
                         self.execute_statement(s)?;
+                    }
+                }
+            }
+            AstNode::For { init, condition, update, body, .. } => {
+                if let Some(i) = init {
+                    self.execute_statement(i)?;
+                }
+                loop {
+                    if let Some(c) = condition {
+                        if !self.evaluate(c)?.is_truthy() {
+                            break;
+                        }
+                    }
+                    if self.gui.as_ref().map(|g| g.closed).unwrap_or(false) {
+                        break;
+                    }
+                    for s in body {
+                        self.execute_statement(s)?;
+                    }
+                    if let Some(u) = update {
+                        self.execute_statement(u)?;
                     }
                 }
             }
@@ -670,6 +692,9 @@ impl Interpreter {
                 if let Some(v) = self.globals.get(name) {
                     return Ok(v.clone());
                 }
+                if self.aliases.contains_key(name) || self.functions.contains_key(name) {
+                    return self.call_name(name, &[], 0);
+                }
                 if let Some(c) = color_named(name) {
                     if self.has_pkg(packages::PKG_GUI) {
                         return Ok(Value::Number(c as f64));
@@ -872,6 +897,9 @@ impl Interpreter {
 
     fn eval_method(&mut self, target: &Expr, method_name: &str, args: &[Expr], line: usize) -> YppResult<Value> {
         if let Expr::Ident { name } = target {
+            if name == "comp" && method_name == "quit" {
+                std::process::exit(0);
+            }
             if name.eq_ignore_ascii_case("KEYBOARD") {
                 self.require_gui(line, "KEYBOARD")?;
                 let key = match args.get(0).map(|e| self.evaluate(e)) {

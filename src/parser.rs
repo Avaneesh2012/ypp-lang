@@ -92,7 +92,14 @@ impl Parser {
                 Ok(AstNode::GlobalBlock { inner: Box::new(inner) })
             }
             TokenType::While => self.parse_while(),
+            TokenType::For => self.parse_for(),
             TokenType::If => self.parse_if(),
+            TokenType::Continue => {
+                let line = self.peek().line;
+                self.advance();
+                self.optional_semicolon();
+                Ok(AstNode::Continue { line })
+            }
             TokenType::KwSmallint | TokenType::KwInteger | TokenType::KwDouble | TokenType::KwBool => {
                 self.parse_bare_var_decl()
             }
@@ -364,6 +371,37 @@ impl Parser {
         Ok(body)
     }
 
+    fn parse_for(&mut self) -> Result<AstNode, YppError> {
+        let line = self.peek().line;
+        self.advance(); // consume for
+        self.expect(TokenType::LParen, "'('")?;
+        
+        let init = if self.check(&TokenType::Semicolon) {
+            None
+        } else {
+            Some(Box::new(self.parse_statement()?))
+        };
+        if self.check(&TokenType::Semicolon) { self.advance(); }
+        
+        let condition = if self.check(&TokenType::Semicolon) {
+            None
+        } else {
+            Some(self.parse_expr()?)
+        };
+        self.expect(TokenType::Semicolon, "';' after for condition")?;
+        
+        let update = if self.check(&TokenType::RParen) {
+            None
+        } else {
+            Some(Box::new(self.parse_statement()?))
+        };
+        self.expect(TokenType::RParen, "')'")?;
+        
+        let body = self.parse_block_body()?;
+        
+        Ok(AstNode::For { init, condition, update, body, line })
+    }
+
     fn parse_while(&mut self) -> Result<AstNode, YppError> {
         let line = self.peek().line;
         self.advance(); // consume while
@@ -390,7 +428,11 @@ impl Parser {
         };
         let body = self.parse_block_body()?;
         let else_body = if self.match_token(TokenType::Else) {
-            Some(self.parse_block_body()?)
+            if self.check(&TokenType::If) {
+                Some(vec![self.parse_if()?])
+            } else {
+                Some(self.parse_block_body()?)
+            }
         } else {
             None
         };

@@ -208,6 +208,16 @@ pub enum AstNode {
         else_body: Option<Vec<AstNode>>,
         line: usize,
     },
+    For {
+        init: Option<Box<AstNode>>,
+        condition: Option<Expr>,
+        update: Option<Box<AstNode>>,
+        body: Vec<AstNode>,
+        line: usize,
+    },
+    Continue {
+        line: usize,
+    },
     /// Expression used as a statement (e.g. bare method call).
     ExprStatement {
         expr: Expr,

@@ -16,6 +16,7 @@ pub enum TokenType {
     New,
     KwGlobal,
     While,
+    For,
     If,
     Else,
     Not,
@@ -30,6 +31,7 @@ pub enum TokenType {
     KwSlong,
     KwSchar,
     KwBool,
+    Continue,
 
     // Cast calls
     CastInt,

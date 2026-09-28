@@ -1,8 +1,8 @@
-# Y++ Programming Language [v1.2.0 Stable]
+# Y++ Programming Language [v1.2.1 Stable]
 
 Y++ is an interpreted, block-scoped programming language designed for clean syntax, explicit type bounds, built-in TCP socket networking, GUI/game windows, and interactive terminal applications.
 
-Y++ is a **native executable**. Download a binary for your OS — no JVM or Node required.
+Y++ is a native executable. Download a binary for your OS — no JVM or Node required.
 
 ```ypp
 Import ycomponents *
@@ -56,6 +56,15 @@ cargo build --release
   `[Y++ Error] Line 8: smallint value 5000 out of range [-1000, 1000]`
 - **Missing packages**:
   `[Y++ Error] Line 10: Import yGUI is required to use KEYBOARD.`
+
+---
+
+## New Features in v1.2.1
+
+- **Control Flow**: Added support for `for` loops and `else if` chains.
+- **Continue Keyword**: The `continue` keyword is now supported to skip the rest of a loop iteration or function execution.
+- **Program Exit**: Added `comp.quit()` as a global method to exit the program.
+- **Y++ IDE**: The standalone graphical `ypp-ide` binary is now included alongside the compiler.
 
 ---
 
@@ -258,6 +267,14 @@ Close the window to end the loop. See `examples/example6.ypp`.
 ```ypp
 if x == 1 {
     PRINT: "one";
+} else if x == 2 {
+    PRINT: "two";
+} else {
+    continue;
+}
+
+for (integer i = 0; i < 10; i++) {
+    PRINT: int() i;
 }
 
 STRING line;

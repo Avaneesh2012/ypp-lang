@@ -32,6 +32,8 @@ fn main() {
         } else {
             run_file(&args[1]);
         }
+    } else if args.len() == 3 && args[1] == "--print-ast" {
+        run_file_print_ast(&args[2]);
     } else {
         print_help();
         process::exit(1);
@@ -168,3 +170,14 @@ fn execute(source: &str, require_import: bool) -> Result<(), crate::error::YppEr
     }
     interpreter.execute_program(&ast)
 }
+fn run_file_print_ast(path: &str) {
+    let source = fs::read_to_string(path).unwrap();
+    let mut lexer = Lexer::new(&source);
+    let tokens = lexer.tokenize();
+    let mut parser = Parser::new(tokens);
+    match parser.parse() {
+        Ok(program) => println!("{:#?}", program),
+        Err(e) => eprintln!("{}", e),
+    }
+}
+
