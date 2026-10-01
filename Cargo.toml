@@ -28,6 +28,3 @@ path = "src/main.rs"
 name = "ypp-ide"
 path = "src/ide.rs"
 
-[[bin]]
-name = "ypp-ide2"
-path = "src/ide2.rs"
