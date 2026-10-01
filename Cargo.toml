@@ -1,12 +1,15 @@
 [package]
 name = "ypp"
-version = "1.2.1"
+version = "2.0.0"
 edition = "2021"
-description = "Y++ Programming Language Interpreter"
+description = "Y++ Programming Language Interpreter & IDE"
 authors = ["Avaneesh"]
 
 [dependencies]
 minifb = "0.28"
+eframe = { version = "0.29", features = ["default"] }
+egui = "0.29"
+rfd = "0.15"
 
 [target.'cfg(windows)'.dependencies]
 native-windows-derive = "1.0.5"
@@ -25,3 +28,6 @@ path = "src/main.rs"
 name = "ypp-ide"
 path = "src/ide.rs"
 
+[[bin]]
+name = "ypp-ide2"
+path = "src/ide2.rs"
